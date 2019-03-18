@@ -52,50 +52,70 @@ public class HttpServer implements Runnable {
                 System.out.println();
             }
 
-            if(req.getFileRequested().contains("import")){
+            if (req.getFileRequested().contains("import")) {
+
                 JSONObject jsonObj = new JSONObject();
-                if(!req.getParams().contains("name")||!req.getParams().contains("location")){
-                    //return bad request
-                }
-                else {
-                        String[] stage1 = req.getParams().split("=");
+                if (!req.getParams().contains("name") || !req.getParams().contains("location")) {
+
+                    out.println("HTTP/1.1 400: Bad Request");
+                    out.println("Server: Java HTTP Server from Borgersen");
+                    out.println("Date: " + new Date());
+
+                } else {
+                    String[] stage1 = req.getParams().split("=");
                     String[] stage2 = stage1[1].split("&");
 
                     try {
 
-                        jsonObj.put("name",stage2[0]);
-                        jsonObj.put("location",stage1[2]);
+                        jsonObj.put("name", stage2[0]);
+                        jsonObj.put("location", stage1[2]);
 
-
-                   } catch (JSONException e) {
+                    } catch (JSONException e) {
 
                         e.printStackTrace();
                     }
 
-                }
+                    byte[] fileData = jsonObj.toString().getBytes(StandardCharsets.UTF_8);
+                    int fileLength = fileData.length;
 
-                byte[] fileData = jsonObj.toString().getBytes(StandardCharsets.UTF_8);
+                    byte[] bytes = fileData;
+                    File file = new File("demo.json");
+
+                    try {
+
+                        OutputStream os = new FileOutputStream(file);
+                        os.write(bytes);
+                        System.out.println("Write bytes to file.");
+
+                        os.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    // send HTTP Headers
+                    out.println("HTTP/1.1 200 OK");
+                    out.println("Server: Java HTTP Server from Borgersen");
+                    out.println("Date: " + new Date());
+                    out.println("Content-type: " + "application/json");
+                    out.println("Content-length: " + fileLength);
+                    out.println(); // blank line between headers and content, very important !
+                    out.flush(); // flush character output stream buffer
+
+                    dataOut.write(fileData, 0, fileLength);
+                    dataOut.flush();
+
+                }
+            }
+
+            if (req.getRequestType() != "INVALID") {
+
+                byte[] fileData = FileRetriever.getFile(req.getFileRequested());
                 int fileLength = fileData.length;
-
-                byte[] bytes = fileData;
-                File file = new File("demo.json");
-
-                try {
-
-                    OutputStream os = new FileOutputStream(file);
-                    os.write(bytes);
-                    System.out.println("Write bytes to file.");
-
-                    os.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
                 // send HTTP Headers
                 out.println("HTTP/1.1 200 OK");
                 out.println("Server: Java HTTP Server from Borgersen");
                 out.println("Date: " + new Date());
-                out.println("Content-type: " + "application/json");
+                out.println("Content-type: " + new MimeType(req.getFileRequested()).getMime());
                 out.println("Content-length: " + fileLength);
                 out.println(); // blank line between headers and content, very important !
                 out.flush(); // flush character output stream buffer
@@ -105,27 +125,34 @@ public class HttpServer implements Runnable {
 
             }
 
-           if (req.getRequestType() != "INVALID") {
-
-               byte[] fileData = FileRetriever.getFile(req.getFileRequested());
-               int fileLength = fileData.length;
-               // send HTTP Headers
-               out.println("HTTP/1.1 200 OK");
-               out.println("Server: Java HTTP Server from Borgersen");
-               out.println("Date: " + new Date());
-               out.println("Content-type: " + new MimeType(req.getFileRequested()).getMime());
-               out.println("Content-length: " + fileLength);
-               out.println(); // blank line between headers and content, very important !
-               out.flush(); // flush character output stream buffer
-
-               dataOut.write(fileData, 0, fileLength);
-               dataOut.flush();
-
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
+                if (dataOut != null) {
+                    dataOut.close();
+                }
+                connect.close(); // we close socket connection
+            } catch (Exception e) {
+                System.err.println("Error closing stream : " + e.getMessage());
+            }
+
         }
 
     }
 }
+
+
+
+
+
+
+
+
