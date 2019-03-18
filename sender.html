@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="http://localhost:8080">
+    <meta charset="UTF-8">
+    <title>Borgersen Server</title>
+
+</head>
+<body>
+<h1>Send json</h1>
+
+
+<br>
+<label>Name</label>
+<input type="text" id="fieldA" value="">
+
+<label>Location</label>
+<input type="text" id="fieldB" value="">
+
+<p>Click the "Try it" button to get the text in the text field.</p>
+
+<button onclick="myFunction()">Try it</button>
+
+<p id="demo"></p>
+
+<script>
+    function myFunction() {
+        var a = document.getElementById("fieldA").value;
+        var b = document.getElementById("fieldB").value;
+
+
+
+
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:8080/import", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function() {
+            if (this.readyState === XMLHttpRequest.DONE) {
+
+                window.location.replace('demo.json');
+
+
+            }
+        }
+        xhr.send("name="+a+"&location="+b);
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+
+</body>
+</html>
